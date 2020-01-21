@@ -5,8 +5,14 @@
 #include <Ping.h>
 #include <Adafruit_PWMServoDriver.h>
 #include <ros.h>
+
 #include <std_msgs/Header.h>
 #include <sensor_msgs/Range.h>
+#include <std_msgs/Bool.h>
+#include <std_msgs/Float32.h>
+#include <std_msgs/Int16.h>
+#include <std_msgs/Int32.h>
+
 using namespace std_msgs;
 using namespace sensor_msgs;
 //CONFIG
@@ -14,7 +20,7 @@ using namespace sensor_msgs;
 #define SHARP_MIN 0.01
 
 #define PING_MAX 3
-#define PING_MAX 0.01
+#define PING_MIN 0.01
 
 #define SHARP1_PIN A0
 #define SHARP2_PIN A1
@@ -28,6 +34,12 @@ using namespace sensor_msgs;
 
 #define EMERGENCY_OUT 12
 #define EMERGENCY_IN 11
+
+#define POWER_LINE1 A13
+#define POWER_LINE2 A14
+#define POWER_LINE3 A15
+
+// #define STD_SERVO1
 
 // #define SERVO1_PIN
 
@@ -51,16 +63,27 @@ float sharp2_cm = 0;
 float sharp3_cm = 0;
 float sharp4_cm = 0;
 
-long enc1 = 0;
-long enc2 = 0;
+
 float bat = 0;
+float power_line1 = 0;
+float power_line2 = 0;
+float power_line3 = 0;
+bool emergency_1 = false;
+bool emergency_2 = false;
 
 float m1 = 0;
 float m2 = 0;
+long enc1 = 0;
+long enc2 = 0;
 
-bool emergency_1 = false;
-bool emergency_2 = false;
-// boll
+int servo1 = 0;
+bool servo1_first = true;
+int servo2 = 0;
+bool servo2_first = true;
+int servo3 = 0;
+bool servo3_first = true;
+int servo4 = 0;
+bool servo4_first = true;
 
 void read_sensors()
 {
@@ -73,6 +96,10 @@ void read_sensors()
     //Pings
     ping1_cm = ping1.read_cm();
     ping2_cm = ping2.read_cm();
+
+    power_line1 = analogRead(POWER_LINE1);
+    power_line2 = analogRead(POWER_LINE2);
+    power_line3 = analogRead(POWER_LINE3);
 }
 
 void read_driver()
@@ -98,6 +125,10 @@ void send_to_motors()
     }
 }
 
+void send_to_servos(){
+
+}
+// OUT
 Header h;
 Range range_sharp1;
 Range range_sharp2;
@@ -106,6 +137,35 @@ Range range_sharp4;
 
 Range range_ping1;
 Range range_ping2;
+
+Bool emergency_arduino_msg;
+Float32 bat_msg;
+Float32 power_line1_msg;
+Float32 power_line2_msg;
+Float32 power_line3_msg;
+
+Int32 enc1_msg;
+Int32 enc2_msg;
+
+// IN
+Bool emergency_main_msg;
+Int16 servo1_msg;
+Int16 servo2_msg;
+Int16 servo3_msg;
+Int16 servo4_msg;
+
+Int16 m1_msg;
+Int16 m2_msg;
+
+ros::Publisher range_sharp1_pub("range_sharp1", &range_sharp1);
+ros::Publisher range_sharp2_pub("range_sharp2", &range_sharp2);
+ros::Publisher range_sharp3_pub("range_sharp3", &range_sharp3);
+ros::Publisher range_sharp4_pub("range_sharp4", &range_sharp4);
+
+ros::Publisher range_ping1_pub("range_ping1", &range_ping1);
+ros::Publisher range_ping2_pub("range_ping2", &range_ping2);
+
+
 
 void communicate()
 {
@@ -125,6 +185,15 @@ void communicate()
     range_ping2.header = h;
     range_ping1.range = ping1_cm / 100;
     range_ping2.range = ping2_cm / 100;
+
+    emergency_arduino_msg.data = emergency_1;
+    bat_msg.data = bat;
+    power_line1_msg.data = power_line1;
+    power_line2_msg.data = power_line2;
+    power_line3_msg.data = power_line3;
+
+    enc1_msg.data = enc1;
+    enc2_msg.data = enc2;
 }
 
 void setup()
@@ -172,7 +241,8 @@ void loop()
     }
     read_sensors();
     read_driver();
-    // echnge
+    communicate();
+
     if (emergency_1 || emergency_2)
     {
         digitalWrite(EMERGENCY_OUT, 1);
@@ -181,6 +251,6 @@ void loop()
     {
         digitalWrite(EMERGENCY_OUT, 0);
     }
-    communicate();
+
     send_to_motors();
 }
