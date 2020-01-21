@@ -17,16 +17,16 @@
 ```
 ### ROS Topics
 #### Sharp
-arduino/range_sharp1 \
-arduino/range_sharp2 \
-arduino/range_sharp3 \
-arduino/range_sharp4 
+arduino/range_sharp1 Range \
+arduino/range_sharp2 Range \
+arduino/range_sharp3 Range \
+arduino/range_sharp4 Range
 #### Ping
-arduino/range_ping1 \
-arduino/range_ping2 
+arduino/range_ping1 Range \
+arduino/range_ping2 Range
 #### Enc
-arduino/enc1 \
-arduino/enc2 
+arduino/enc1 Int32 \
+arduino/enc2 Int32
 #### Bat
 arduino/bat
 #### Power Lines 
@@ -34,18 +34,18 @@ arduino/power_line1 \
 arduino/power_line2 \
 arduino/power_line3 
 #### Anlog In
-arduino/analogin_1 \
-arduino/analogin_2 \
-arduino/analogin_3 \
-arduino/analogin_4 
+arduino/analogin_1 Int16 \
+arduino/analogin_2 Int16 \
+arduino/analogin_3 Int16 \
+arduino/analogin_4 Int16
 #### Servo
-arduino/servo1 \
-arduino/servo2 \
-arduino/servo3 \
-arduino/servo4
+arduino/servo1 Int16 \
+arduino/servo2 Int16 \
+arduino/servo3 Int16 \
+arduino/servo4 Int16
 #### Motors
-arduino/m1 \
-arduino/m2
+arduino/m1 Int16 \
+arduino/m2 Int16
 #### Emergency 
 emergency_arduino
 
