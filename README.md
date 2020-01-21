@@ -28,11 +28,11 @@ arduino/range_ping2 Range
 arduino/enc1 Int32 \
 arduino/enc2 Int32
 #### Bat
-arduino/bat Float16
+arduino/bat Float32
 #### Power Lines 
-arduino/power_line1 Float16 \
-arduino/power_line2 Float16 \
-arduino/power_line3 Float16
+arduino/power_line1 Float32 \
+arduino/power_line2 Float32 \
+arduino/power_line3 Float32
 #### Anlog In
 arduino/analogin_1 Int16 \
 arduino/analogin_2 Int16 \

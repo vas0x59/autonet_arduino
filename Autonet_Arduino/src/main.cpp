@@ -10,7 +10,6 @@
 #include <sensor_msgs/Range.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float32.h>
-#include <std_msgs/Float16.h>
 #include <std_msgs/Int16.h>
 #include <std_msgs/Int32.h>
 
@@ -158,10 +157,10 @@ Range range_ping1; //
 Range range_ping2; //
 
 Bool emergency_arduino_msg; //
-Float16 bat_msg;            //
-Float16 power_line1_msg;    //
-Float16 power_line2_msg;    //
-Float16 power_line3_msg;    //
+Float32 bat_msg;            //
+Float32 power_line1_msg;    //
+Float32 power_line2_msg;    //
+Float32 power_line3_msg;    //
 
 Int32 enc1_msg; //
 Int32 enc2_msg; //
