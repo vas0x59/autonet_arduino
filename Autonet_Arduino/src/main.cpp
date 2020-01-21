@@ -167,14 +167,35 @@ Int16 analogin_3_msg; //
 Int16 analogin_4_msg; //
 
 // IN
-Bool emergency_main_msg;
-Int16 servo1_msg;
-Int16 servo2_msg;
-Int16 servo3_msg;
-Int16 servo4_msg;
+void emergency_main_cb(const std_msgs::Bool &emg_msg)
+{
+    emergency_2 = emg_msg.data;
+}
+void servo1_cb(const std_msgs::Int16 &msg)
+{
+    servo1 = msg.data;
+}
+void servo2_cb(const std_msgs::Int16 &msg)
+{
+    servo2 = msg.data;
+}
+void servo3_cb(const std_msgs::Int16 &msg)
+{
+    servo3 = msg.data;
+}
+void servo4_cb(const std_msgs::Int16 &msg)
+{
+    servo4 = msg.data;
+}
 
-Int16 m1_msg;
-Int16 m2_msg;
+void m1_cb(const std_msgs::Int16 &msg)
+{
+    m1 = msg.data;
+}
+void m2_cb(const std_msgs::Int16 &msg)
+{
+    m2 = msg.data;
+}
 
 // Publisher
 ros::Publisher range_sharp1_pub("arduino/range_sharp1", &range_sharp1);
@@ -199,6 +220,16 @@ ros::Publisher analogin_2_pub("arduino/analogin_2", &analogin_2_msg);
 ros::Publisher analogin_3_pub("arduino/analogin_3", &analogin_3_msg);
 ros::Publisher analogin_4_pub("arduino/analogin_4", &analogin_4_msg);
 
+//Subscriber
+ros::Subscriber<std_msgs::Bool> sub("emergency_main", &emergency_main_cb);
+
+ros::Subscriber<std_msgs::Int16> sub("arduino/servo1", &servo1_cb);
+ros::Subscriber<std_msgs::Int16> sub("arduino/servo2", &servo2_cb);
+ros::Subscriber<std_msgs::Int16> sub("arduino/servo3", &servo3_cb);
+ros::Subscriber<std_msgs::Int16> sub("arduino/servo4", &servo4_cb);
+
+ros::Subscriber<std_msgs::Int16> sub("arduino/m1", &m1_cb);
+ros::Subscriber<std_msgs::Int16> sub("arduino/m2", &m2_cb);
 
 void communicate()
 {
