@@ -47,7 +47,8 @@ arduino/servo4 Int16
 arduino/m1 Int16 \
 arduino/m2 Int16
 #### Emergency 
-emergency_arduino
+arduino/emergency_arduino Bool
+emergency_main Bool
 
 ```
 2 analog 
