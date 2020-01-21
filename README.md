@@ -29,4 +29,4 @@ pwm output 4x
 2 digital input
 ```
 
-by Vasily, Viktor, Dmitrii, Georgy
+by Vasily
