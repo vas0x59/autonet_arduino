@@ -15,6 +15,10 @@
 
 using namespace std_msgs;
 using namespace sensor_msgs;
+
+
+ros::NodeHandle nh;
+
 //CONFIG
 #define SHARP_MAX 1
 #define SHARP_MIN 0.01
@@ -285,11 +289,12 @@ void communicate()
     analogin_2_pub.publish(&analogin_2_msg);
     analogin_3_pub.publish(&analogin_3_msg);
     analogin_4_pub.publish(&analogin_4_msg);
+
+    nh.spinOnce();
 }
 
 void setup()
 {
-    Serial.begin(115200);
     Wire.begin();
     driver.init();
     pinMode(EMERGENCY_IN, INPUT);
@@ -313,6 +318,17 @@ void setup()
     range_ping2.radiation_type = range_ping2.ULTRASOUND;
     range_ping2.max_range = PING_MAX;
     range_ping2.min_range = PING_MIN;
+
+    Serial.begin(115200);
+    nh.initNode();
+    nh.subscribe(emergency_main_sub);
+    nh.subscribe(servo1_sub);
+    nh.subscribe(servo2_sub);
+    nh.subscribe(servo3_sub);
+    nh.subscribe(servo4_sub);
+
+    nh.subscribe(m1_sub);
+    nh.subscribe(m2_sub);
     // pwm.begin();
 
     // pwm.setOscillatorFrequency(27000000);
