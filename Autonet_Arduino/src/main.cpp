@@ -145,6 +145,9 @@ void send_to_motors()
 
 void send_to_servos()
 {
+    if (!emergency_1 && !emergency_2)
+    {
+    }
 }
 // OUT
 Header h;
@@ -360,4 +363,5 @@ void loop()
     }
 
     send_to_motors();
+    send_to_servos();
 }
