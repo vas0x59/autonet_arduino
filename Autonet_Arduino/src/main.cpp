@@ -38,7 +38,12 @@ using namespace sensor_msgs;
 #define POWER_LINE1 A13
 #define POWER_LINE2 A14
 #define POWER_LINE3 A15
+#define POWER_LINE_K 1
 
+#define ANALOGIN_1 A4
+#define ANALOGIN_2 A5
+#define ANALOGIN_3 A6
+#define ANALOGIN_4 A7
 // #define STD_SERVO1
 
 // #define SERVO1_PIN
@@ -63,13 +68,17 @@ float sharp2_cm = 0;
 float sharp3_cm = 0;
 float sharp4_cm = 0;
 
-
 float bat = 0;
 float power_line1 = 0;
 float power_line2 = 0;
 float power_line3 = 0;
 bool emergency_1 = false;
 bool emergency_2 = false;
+
+float analogin_1 = 0;
+float analogin_2 = 0;
+float analogin_3 = 0;
+float analogin_4 = 0;
 
 float m1 = 0;
 float m2 = 0;
@@ -97,9 +106,14 @@ void read_sensors()
     ping1_cm = ping1.read_cm();
     ping2_cm = ping2.read_cm();
 
-    power_line1 = analogRead(POWER_LINE1);
-    power_line2 = analogRead(POWER_LINE2);
-    power_line3 = analogRead(POWER_LINE3);
+    power_line1 = analogRead(POWER_LINE1) * 5 / 1024 * POWER_LINE_K;
+    power_line2 = analogRead(POWER_LINE2) * 5 / 1024 * POWER_LINE_K;
+    power_line3 = analogRead(POWER_LINE3) * 5 / 1024 * POWER_LINE_K;
+
+    analogin_1 = analogRead(ANALOGIN_1);
+    analogin_2 = analogRead(ANALOGIN_2);
+    analogin_3 = analogRead(ANALOGIN_3);
+    analogin_4 = analogRead(ANALOGIN_4);
 }
 
 void read_driver()
@@ -118,34 +132,39 @@ void send_to_motors()
     }
     else
     {
-        float m1 = 0;
-        float m2 = 0;
+        m1 = 0;
+        m2 = 0;
         driver.set_speed_m1(0);
         driver.set_speed_m2(0);
     }
 }
 
-void send_to_servos(){
-
+void send_to_servos()
+{
 }
 // OUT
 Header h;
-Range range_sharp1;
-Range range_sharp2;
-Range range_sharp3;
-Range range_sharp4;
+Range range_sharp1; //
+Range range_sharp2; //
+Range range_sharp3; //
+Range range_sharp4; //
 
-Range range_ping1;
-Range range_ping2;
+Range range_ping1; //
+Range range_ping2; //
 
-Bool emergency_arduino_msg;
-Float32 bat_msg;
-Float32 power_line1_msg;
-Float32 power_line2_msg;
-Float32 power_line3_msg;
+Bool emergency_arduino_msg; //
+Float32 bat_msg;            //
+Float32 power_line1_msg;    //
+Float32 power_line2_msg;    //
+Float32 power_line3_msg;    //
 
-Int32 enc1_msg;
-Int32 enc2_msg;
+Int32 enc1_msg; //
+Int32 enc2_msg; //
+
+Int16 analogin_1_msg; //
+Int16 analogin_2_msg; //
+Int16 analogin_3_msg; //
+Int16 analogin_4_msg; //
 
 // IN
 Bool emergency_main_msg;
@@ -157,14 +176,28 @@ Int16 servo4_msg;
 Int16 m1_msg;
 Int16 m2_msg;
 
-ros::Publisher range_sharp1_pub("range_sharp1", &range_sharp1);
-ros::Publisher range_sharp2_pub("range_sharp2", &range_sharp2);
-ros::Publisher range_sharp3_pub("range_sharp3", &range_sharp3);
-ros::Publisher range_sharp4_pub("range_sharp4", &range_sharp4);
+// Publisher
+ros::Publisher range_sharp1_pub("arduino/range_sharp1", &range_sharp1);
+ros::Publisher range_sharp2_pub("arduino/range_sharp2", &range_sharp2);
+ros::Publisher range_sharp3_pub("arduino/range_sharp3", &range_sharp3);
+ros::Publisher range_sharp4_pub("arduino/range_sharp4", &range_sharp4);
 
-ros::Publisher range_ping1_pub("range_ping1", &range_ping1);
-ros::Publisher range_ping2_pub("range_ping2", &range_ping2);
+ros::Publisher range_ping1_pub("arduino/range_ping1", &range_ping1);
+ros::Publisher range_ping2_pub("arduino/range_ping2", &range_ping2);
 
+ros::Publisher enc1_pub("arduino/enc1", &enc1_msg);
+ros::Publisher enc2_pub("arduino/enc2", &enc1_msg);
+
+ros::Publisher bat_pub("arduino/bat", &bat_msg);
+ros::Publisher emergency_arduino_pub("arduino/emergency_arduino", &emergency_arduino_msg);
+ros::Publisher power_line1_pub("arduino/power_line1", &power_line1_msg);
+ros::Publisher power_line2_pub("arduino/power_line2", &power_line2_msg);
+ros::Publisher power_line3_pub("arduino/power_line3", &power_line3_msg);
+
+ros::Publisher analogin_1_pub("arduino/analogin_1", &analogin_1_msg);
+ros::Publisher analogin_2_pub("arduino/analogin_2", &analogin_2_msg);
+ros::Publisher analogin_3_pub("arduino/analogin_3", &analogin_3_msg);
+ros::Publisher analogin_4_pub("arduino/analogin_4", &analogin_4_msg);
 
 
 void communicate()
@@ -194,6 +227,33 @@ void communicate()
 
     enc1_msg.data = enc1;
     enc2_msg.data = enc2;
+
+    analogin_1_msg.data = analogin_1;
+    analogin_2_msg.data = analogin_2;
+    analogin_3_msg.data = analogin_3;
+    analogin_4_msg.data = analogin_4;
+
+    range_sharp1_pub.publish(&range_sharp1);
+    range_sharp2_pub.publish(&range_sharp2);
+    range_sharp3_pub.publish(&range_sharp3);
+    range_sharp4_pub.publish(&range_sharp4);
+
+    range_ping1_pub.publish(&range_ping1);
+    range_ping1_pub.publish(&range_ping2);
+
+    enc1_pub.publish(&enc1_msg);
+    enc2_pub.publish(&enc2_msg);
+
+    bat_pub.publish(&bat_msg);
+    emergency_arduino_pub.publish(&emergency_arduino_msg);
+    power_line1_pub.publish(&power_line1_msg);
+    power_line2_pub.publish(&power_line2_msg);
+    power_line3_pub.publish(&power_line3_msg);
+
+    analogin_1_pub.publish(&analogin_1_msg);
+    analogin_2_pub.publish(&analogin_2_msg);
+    analogin_3_pub.publish(&analogin_3_msg);
+    analogin_4_pub.publish(&analogin_4_msg);
 }
 
 void setup()
