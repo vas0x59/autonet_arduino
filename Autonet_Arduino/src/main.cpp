@@ -4,8 +4,18 @@
 #include <Sharp.h>
 #include <Ping.h>
 #include <Adafruit_PWMServoDriver.h>
-
+#include <ros.h>
+#include <std_msgs/Header.h>
+#include <sensor_msgs/Range.h>
+using namespace std_msgs;
+using namespace sensor_msgs;
 //CONFIG
+#define SHARP_MAX 1
+#define SHARP_MIN 0.01
+
+#define PING_MAX 3
+#define PING_MAX 0.01
+
 #define SHARP1_PIN A0
 #define SHARP2_PIN A1
 #define SHARP3_PIN A2
@@ -15,6 +25,9 @@
 #define PING2_PIN 3
 
 #define DRIVER_ADDRES 2
+
+#define EMERGENCY_OUT 12
+#define EMERGENCY_IN 11
 
 // #define SERVO1_PIN
 
@@ -45,7 +58,9 @@ float bat = 0;
 float m1 = 0;
 float m2 = 0;
 
-bool emergency = false;
+bool emergency_1 = false;
+bool emergency_2 = false;
+// boll
 
 void read_sensors()
 {
@@ -69,11 +84,47 @@ void read_driver()
 
 void send_to_motors()
 {
-    if (!emergency)
+    if (!emergency_1 && !emergency_2)
     {
         driver.set_speed_m1(m1);
         driver.set_speed_m2(m2);
     }
+    else
+    {
+        float m1 = 0;
+        float m2 = 0;
+        driver.set_speed_m1(0);
+        driver.set_speed_m2(0);
+    }
+}
+
+Header h;
+Range range_sharp1;
+Range range_sharp2;
+Range range_sharp3;
+Range range_sharp4;
+
+Range range_ping1;
+Range range_ping2;
+
+void communicate()
+{
+
+    h.stamp.sec = millis() / 1000;
+
+    range_sharp1.header = h;
+    range_sharp2.header = h;
+    range_sharp3.header = h;
+    range_sharp4.header = h;
+    range_sharp1.range = sharp1_cm / 100;
+    range_sharp2.range = sharp2_cm / 100;
+    range_sharp3.range = sharp3_cm / 100;
+    range_sharp4.range = sharp3_cm / 100;
+
+    range_ping1.header = h;
+    range_ping2.header = h;
+    range_ping1.range = ping1_cm / 100;
+    range_ping2.range = ping2_cm / 100;
 }
 
 void setup()
@@ -81,10 +132,31 @@ void setup()
     Serial.begin(115200);
     Wire.begin();
     driver.init();
-    pwm.begin();
+    pinMode(EMERGENCY_IN, INPUT);
+    pinMode(EMERGENCY_OUT, OUTPUT);
+    range_sharp1.radiation_type = range_sharp1.INFRARED;
+    range_sharp1.max_range = SHARP_MAX;
+    range_sharp1.min_range = SHARP_MIN;
+    range_sharp2.radiation_type = range_sharp2.INFRARED;
+    range_sharp2.max_range = SHARP_MAX;
+    range_sharp2.min_range = SHARP_MIN;
+    range_sharp3.radiation_type = range_sharp3.INFRARED;
+    range_sharp3.max_range = SHARP_MAX;
+    range_sharp3.min_range = SHARP_MIN;
+    range_sharp3.radiation_type = range_sharp4.INFRARED;
+    range_sharp4.max_range = SHARP_MAX;
+    range_sharp4.min_range = SHARP_MIN;
 
-    pwm.setOscillatorFrequency(27000000);
-    pwm.setPWMFreq(1600); // This is the maximum PWM frequency
+    range_ping1.radiation_type = range_ping1.ULTRASOUND;
+    range_ping1.max_range = PING_MAX;
+    range_ping1.min_range = PING_MIN;
+    range_ping2.radiation_type = range_ping2.ULTRASOUND;
+    range_ping2.max_range = PING_MAX;
+    range_ping2.min_range = PING_MIN;
+    // pwm.begin();
+
+    // pwm.setOscillatorFrequency(27000000);
+    // pwm.setPWMFreq(1600); // This is the maximum PWM frequency
 
     // if you want to really speed stuff up, you can go into 'fast 400khz I2C' mode
     // some i2c devices dont like this so much so if you're sharing the bus, watch
@@ -94,4 +166,21 @@ void setup()
 
 void loop()
 {
+    if (digitalRead(EMERGENCY_IN) == 1)
+    {
+        emergency_1 = true;
+    }
+    read_sensors();
+    read_driver();
+    // echnge
+    if (emergency_1 || emergency_2)
+    {
+        digitalWrite(EMERGENCY_OUT, 1);
+    }
+    else
+    {
+        digitalWrite(EMERGENCY_OUT, 0);
+    }
+    communicate();
+    send_to_motors();
 }
