@@ -221,15 +221,15 @@ ros::Publisher analogin_3_pub("arduino/analogin_3", &analogin_3_msg);
 ros::Publisher analogin_4_pub("arduino/analogin_4", &analogin_4_msg);
 
 //Subscriber
-ros::Subscriber<std_msgs::Bool> sub("emergency_main", &emergency_main_cb);
+ros::Subscriber<std_msgs::Bool> emergency_main_sub("emergency_main", &emergency_main_cb);
 
-ros::Subscriber<std_msgs::Int16> sub("arduino/servo1", &servo1_cb);
-ros::Subscriber<std_msgs::Int16> sub("arduino/servo2", &servo2_cb);
-ros::Subscriber<std_msgs::Int16> sub("arduino/servo3", &servo3_cb);
-ros::Subscriber<std_msgs::Int16> sub("arduino/servo4", &servo4_cb);
+ros::Subscriber<std_msgs::Int16> servo1_sub("arduino/servo1", &servo1_cb);
+ros::Subscriber<std_msgs::Int16> servo2_sub("arduino/servo2", &servo2_cb);
+ros::Subscriber<std_msgs::Int16> servo3_sub("arduino/servo3", &servo3_cb);
+ros::Subscriber<std_msgs::Int16> servo4_sub("arduino/servo4", &servo4_cb);
 
-ros::Subscriber<std_msgs::Int16> sub("arduino/m1", &m1_cb);
-ros::Subscriber<std_msgs::Int16> sub("arduino/m2", &m2_cb);
+ros::Subscriber<std_msgs::Int16> m1_sub("arduino/m1", &m1_cb);
+ros::Subscriber<std_msgs::Int16> m2_sub("arduino/m2", &m2_cb);
 
 void communicate()
 {
