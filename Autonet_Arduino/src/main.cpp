@@ -14,6 +14,7 @@
 #include <std_msgs/Int32.h>
 
 #include <Servo.h>
+#include <Encoder.h>
 // создаём объекты для управления сервоприводами
 Servo s1;
 Servo s2;
@@ -39,8 +40,8 @@ ros::NodeHandle nh;
 #define SHARP3_PIN A2
 #define SHARP4_PIN A3
 
-#define PING1_PIN 2
-#define PING2_PIN 3
+#define PING1_PIN 30
+#define PING2_PIN 32
 
 #define DRIVER_ADDRES 0x05
 
@@ -67,6 +68,8 @@ ros::NodeHandle nh;
 // #define SERVO1_PIN
 
 // Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+Encoder encoder1(2, 3);
+Encoder encoder2(18, 19);
 
 MotorDriver driver(DRIVER_ADDRES);
 
@@ -134,8 +137,10 @@ void read_sensors() {
 }
 
 void read_driver() {
-  enc1 = driver.get_encoder_m1();
-  enc2 = driver.get_encoder_m2();
+  // enc1 = driver.get_encoder_m1();
+  // enc2 = driver.get_encoder_m2();
+  enc1 = encoder1.read();
+  enc2 = encoder2.read();
   bat = driver.read_bat();
 }
 
@@ -391,7 +396,7 @@ void loop() {
     emergency_1 = true;
   }
   read_sensors();
-  // read_driver();
+  read_driver();
   communicate();
 
   if (emergency_1 || emergency_2) {
