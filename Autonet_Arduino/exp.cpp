@@ -18,16 +18,13 @@ ros::Publisher chatter("chatter", &str_msg);
 
 char hello[13] = "hello world!";
 
-void setup()
-{
+void setup() {
   nh.initNode();
   nh.advertise(chatter);
 }
 
-void loop()
-{
+void loop() {
   str_msg.data = hello;
-  chatter.publish( &str_msg );
+  chatter.publish(&str_msg);
   nh.spinOnce();
-  delay(1000);
 }
