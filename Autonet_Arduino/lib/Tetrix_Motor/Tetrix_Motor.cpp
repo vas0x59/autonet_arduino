@@ -26,12 +26,12 @@ void MotorDriver::set_speed_m1(byte speed)
     Wire.write(0x44);
     Wire.write(1);
     Wire.endTransmission(); // stop transmitting
-    delay(5);
+    delay(1);
     Wire.beginTransmission(addr); // transmit to device #44 (0x2c)
     Wire.write(0x45);
     Wire.write(speed);
     Wire.endTransmission(); // stop transmitting
-    delay(10);
+    delay(1);
 }
 
 void MotorDriver::set_speed_m2(byte speed)
@@ -40,12 +40,12 @@ void MotorDriver::set_speed_m2(byte speed)
     Wire.write(0x47);
     Wire.write(1);
     Wire.endTransmission(); // stop transmitting
-    delay(5);
+    delay(1);
     Wire.beginTransmission(addr); // transmit to device #44 (0x2c)
     Wire.write(0x46);
     Wire.write(speed);
     Wire.endTransmission(); // stop transmitting
-    delay(10);
+    delay(1);
 }
 
 long MotorDriver::get_encoder_m1()
@@ -60,19 +60,22 @@ long MotorDriver::get_encoder_m1()
     Wire.beginTransmission(addr);
     Wire.write(0x4C);
     Wire.endTransmission();
-    delay(10);
+    delay(1);
 
-    Wire.requestFrom(addr, 4);
+    Wire.requestFrom(addr, 1);
     byte1 = Wire.read();
+    Wire.requestFrom(addr, 1);
     byte2 = Wire.read();
+    Wire.requestFrom(addr, 1);
     byte3 = Wire.read();
+    Wire.requestFrom(addr, 1);
     byte4 = Wire.read();
 
     eCount = byte1;
     eCount = (eCount * 256) + byte2;
     eCount = (eCount * 256) + byte3;
     eCount = (eCount * 256) + byte4;
-    delay(10);
+    delay(1);
     return eCount;
 }
 
@@ -88,19 +91,22 @@ long MotorDriver::get_encoder_m2()
     Wire.beginTransmission(addr);
     Wire.write(0x50);
     Wire.endTransmission();
-    delay(10);
+    delay(1);
 
-    Wire.requestFrom(addr, 4);
+    Wire.requestFrom(addr, 1);
     byte1 = Wire.read();
+    Wire.requestFrom(addr, 1);
     byte2 = Wire.read();
+    Wire.requestFrom(addr, 1);
     byte3 = Wire.read();
+    Wire.requestFrom(addr, 1);
     byte4 = Wire.read();
 
     eCount = byte1;
     eCount = (eCount * 256) + byte2;
     eCount = (eCount * 256) + byte3;
     eCount = (eCount * 256) + byte4;
-    delay(10);
+    delay(1);
     return eCount;
 }
 
@@ -115,14 +121,14 @@ int MotorDriver::read_bat()
     Wire.beginTransmission(addr);
     Wire.write(0x54);
     Wire.endTransmission();
-    delay(10);
+    // delay(10);
 
     Wire.requestFrom(addr, 2);
     byte1 = Wire.read();
     byte2 = Wire.read();
     Bvoltage = byte1;
     Bvoltage = (Bvoltage * 256) + byte2;
-    delay(10);
+    delay(1);
 
     return Bvoltage;
 }
