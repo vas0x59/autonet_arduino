@@ -17,6 +17,8 @@ using namespace std_msgs;
 using namespace sensor_msgs;
 
 
+// #include <ros.h>
+
 ros::NodeHandle nh;
 
 //CONFIG
@@ -52,7 +54,7 @@ ros::NodeHandle nh;
 
 // #define SERVO1_PIN
 
-Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+// Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 MotorDriver driver(DRIVER_ADDRES);
 
@@ -107,12 +109,12 @@ void read_sensors()
     sharp4_cm = sharp4.read_cm();
 
     //Pings
-    ping1_cm = ping1.read_cm();
-    ping2_cm = ping2.read_cm();
+    // ping1_cm = ping1.read_cm();
+    // ping2_cm = ping2.read_cm();
 
-    power_line1 = analogRead(POWER_LINE1) * 5 / 1024 * POWER_LINE_K;
-    power_line2 = analogRead(POWER_LINE2) * 5 / 1024 * POWER_LINE_K;
-    power_line3 = analogRead(POWER_LINE3) * 5 / 1024 * POWER_LINE_K;
+    power_line1 = analogRead(POWER_LINE1)  * 0.0048828125 * POWER_LINE_K;
+    power_line2 = analogRead(POWER_LINE2)  * 0.0048828125 * POWER_LINE_K;
+    power_line3 = analogRead(POWER_LINE3)  * 0.0048828125 * POWER_LINE_K;
 
     analogin_1 = analogRead(ANALOGIN_1);
     analogin_2 = analogRead(ANALOGIN_2);
@@ -293,13 +295,13 @@ void communicate()
     analogin_3_pub.publish(&analogin_3_msg);
     analogin_4_pub.publish(&analogin_4_msg);
 
-    nh.spinOnce();
+    
 }
 
 void setup()
 {
     Wire.begin();
-    driver.init();
+    // driver.init();
     pinMode(EMERGENCY_IN, INPUT);
     pinMode(EMERGENCY_OUT, OUTPUT);
     range_sharp1.radiation_type = range_sharp1.INFRARED;
@@ -322,16 +324,38 @@ void setup()
     range_ping2.max_range = PING_MAX;
     range_ping2.min_range = PING_MIN;
 
-    Serial.begin(115200);
+    
     nh.initNode();
+    Serial.begin(115200);
+    nh.subscribe(m1_sub);
+    nh.subscribe(m2_sub);
+    nh.advertise(range_sharp1_pub);
+    nh.advertise(range_sharp2_pub);
+    nh.advertise(range_sharp3_pub);
+    nh.advertise(range_sharp4_pub);
+
+    nh.advertise(range_ping1_pub);
+    nh.advertise(range_ping2_pub);
+
+    nh.advertise(enc1_pub);
+    nh.advertise(enc2_pub);
+
+    nh.advertise(bat_pub);
+    nh.advertise(emergency_arduino_pub);
+    nh.advertise(power_line1_pub);
+    nh.advertise(power_line2_pub);
+    nh.advertise(power_line3_pub);
+
+    nh.advertise(analogin_1_pub);
+    nh.advertise(analogin_2_pub);
+    nh.advertise(analogin_3_pub);
+    nh.advertise(analogin_4_pub);
+
     nh.subscribe(emergency_main_sub);
     nh.subscribe(servo1_sub);
     nh.subscribe(servo2_sub);
     nh.subscribe(servo3_sub);
     nh.subscribe(servo4_sub);
-
-    nh.subscribe(m1_sub);
-    nh.subscribe(m2_sub);
     // pwm.begin();
 
     // pwm.setOscillatorFrequency(27000000);
@@ -350,7 +374,7 @@ void loop()
         emergency_1 = true;
     }
     read_sensors();
-    read_driver();
+    // read_driver();
     communicate();
 
     if (emergency_1 || emergency_2)
@@ -361,7 +385,8 @@ void loop()
     {
         digitalWrite(EMERGENCY_OUT, 0);
     }
-
-    send_to_motors();
-    send_to_servos();
+    nh.spinOnce();
+    delay(1);
+    // send_to_motors();
+    // send_to_servos();
 }
