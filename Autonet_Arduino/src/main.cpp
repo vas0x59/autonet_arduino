@@ -48,7 +48,7 @@ ros::NodeHandle nh;
 #define EMERGENCY_OUT 12
 #define EMERGENCY_IN 11
 
-#define POWER_DATA_RATE 2
+#define POWER_DATA_RATE 1.5
 #define POWER_LINE1 A13
 #define POWER_LINE2 A14
 #define POWER_LINE3 A15
