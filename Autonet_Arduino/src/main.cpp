@@ -141,7 +141,7 @@ void read_driver() {
   // enc2 = driver.get_encoder_m2();
   enc1 = encoder1.read();
   enc2 = encoder2.read();
-  bat = driver.read_bat();
+  // bat = driver.read_bat();
 }
 
 void send_to_motors() {
@@ -321,28 +321,34 @@ void communicate() {
 
 void setup() {
   Wire.begin();
-  driver.init();
+  // driver.init();
   pinMode(EMERGENCY_IN, INPUT);
   pinMode(EMERGENCY_OUT, OUTPUT);
   range_sharp1.radiation_type = range_sharp1.INFRARED;
   range_sharp1.max_range = SHARP_MAX;
   range_sharp1.min_range = SHARP_MIN;
+  range_sharp1.header.frame_id = "range_sharp1";
   range_sharp2.radiation_type = range_sharp2.INFRARED;
   range_sharp2.max_range = SHARP_MAX;
   range_sharp2.min_range = SHARP_MIN;
+  range_sharp2.header.frame_id = "range_sharp2";
   range_sharp3.radiation_type = range_sharp3.INFRARED;
   range_sharp3.max_range = SHARP_MAX;
   range_sharp3.min_range = SHARP_MIN;
+  range_sharp3.header.frame_id = "range_sharp3";
   range_sharp3.radiation_type = range_sharp4.INFRARED;
   range_sharp4.max_range = SHARP_MAX;
   range_sharp4.min_range = SHARP_MIN;
+  range_sharp4.header.frame_id = "range_sharp4";
 
   range_ping1.radiation_type = range_ping1.ULTRASOUND;
   range_ping1.max_range = PING_MAX;
   range_ping1.min_range = PING_MIN;
+  range_ping1.header.frame_id = "range_ping1";
   range_ping2.radiation_type = range_ping2.ULTRASOUND;
   range_ping2.max_range = PING_MAX;
   range_ping2.min_range = PING_MIN;
+  range_ping2.header.frame_id = "range_ping2";
 
   nh.initNode();
   Serial.begin(115200);

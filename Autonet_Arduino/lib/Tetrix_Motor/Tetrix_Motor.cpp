@@ -24,7 +24,7 @@ void MotorDriver::set_speed_m1(byte speed)
 {
     Wire.beginTransmission(addr); // transmit to device #44 (0x2c)
     Wire.write(0x44);
-    Wire.write(1);
+    Wire.write(0);
     Wire.endTransmission(); // stop transmitting
     delay(1);
     Wire.beginTransmission(addr); // transmit to device #44 (0x2c)
@@ -38,7 +38,7 @@ void MotorDriver::set_speed_m2(byte speed)
 {
     Wire.beginTransmission(addr); // transmit to device #44 (0x2c)
     Wire.write(0x47);
-    Wire.write(1);
+    Wire.write(0);
     Wire.endTransmission(); // stop transmitting
     delay(1);
     Wire.beginTransmission(addr); // transmit to device #44 (0x2c)
