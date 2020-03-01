@@ -47,6 +47,7 @@ ros::NodeHandle nh;
 #define PING2_PIN 32
 
 #define DRIVER_ADDRES 0x05
+#define DRIVER_ADDRES2 0x06
 
 #define EMERGENCY_OUT 12
 #define EMERGENCY_IN 33
@@ -64,8 +65,10 @@ ros::NodeHandle nh;
 
 #define SERVO1_PIN 0
 #define SERVO2_PIN 1
-#define SERVO3_PIN 15
-#define SERVO4_PIN 14
+#define SERVO3_PIN 2
+#define SERVO4_PIN 3
+#define SERVO5_PIN 4
+#define SERVO6_PIN 5
 
 #define SERVOMIN 150 // This is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX 600 // This is the 'maximum' pulse length count (out of 4096)
@@ -81,6 +84,7 @@ Encoder encoder1(2, 3);
 Encoder encoder2(18, 19);
 
 MotorDriver driver(DRIVER_ADDRES);
+MotorDriver driver2(DRIVER_ADDRES2);
 
 Sharp sharp1(SHARP1_PIN);
 Sharp sharp2(SHARP2_PIN);
@@ -112,17 +116,23 @@ float analogin_4 = 0;
 
 float m1 = 0;
 float m2 = 0;
+float m3 = 0;
 long enc1 = 0;
 long enc2 = 0;
 
 int servo1 = 0;
-int servo1_first = 0;
+int servo1_first = -1;
 int servo2 = 0;
-int servo2_first = 0;
+int servo2_first = -1;
 int servo3 = 0;
-int servo3_first = 0;
+int servo3_first = -1;
 int servo4 = 0;
-int servo4_first = 0;
+int servo4_first = -1;
+int servo5 = 0;
+int servo5_first = -1;
+int servo6 = 0;
+int servo6_first = -1;
+
 
 void setServoPulse(uint8_t n, double pulse) {
   double pulselength;
@@ -173,11 +183,14 @@ void send_to_motors() {
   if (!emergency_1 && !emergency_2) {
     driver.set_speed_m1(m1);
     driver.set_speed_m2(m2);
+    driver2.set_speed_m1(m3);
   } else {
     m1 = 0;
     m2 = 0;
+    m3 = 0;
     driver.set_speed_m1(0);
     driver.set_speed_m2(0);
+    driver2.set_speed_m1(0);
   }
 }
 
@@ -193,6 +206,8 @@ void send_to_servos() {
     pwm.writeMicroseconds(SERVO2_PIN, map(servo2, 0, 180, USMIN, USMAX));
     pwm.writeMicroseconds(SERVO3_PIN, map(servo3, 0, 180, USMIN, USMAX));
     pwm.writeMicroseconds(SERVO4_PIN, map(servo4, 0, 180, USMIN, USMAX));
+    pwm.writeMicroseconds(SERVO5_PIN, map(servo5, 0, 180, USMIN, USMAX));
+    pwm.writeMicroseconds(SERVO6_PIN, map(servo6, 0, 180, USMIN, USMAX));
 
   } else {
     // s1.write(servo1_first);
@@ -203,6 +218,8 @@ void send_to_servos() {
     pwm.writeMicroseconds(SERVO2_PIN, map(servo2_first, 0, 180, USMIN, USMAX));
     pwm.writeMicroseconds(SERVO3_PIN, map(servo3_first, 0, 180, USMIN, USMAX));
     pwm.writeMicroseconds(SERVO4_PIN, map(servo4_first, 0, 180, USMIN, USMAX));
+    pwm.writeMicroseconds(SERVO5_PIN, map(servo5_first, 0, 180, USMIN, USMAX));
+    pwm.writeMicroseconds(SERVO6_PIN, map(servo6_first, 0, 180, USMIN, USMAX));
   }
 }
 // OUT
@@ -253,9 +270,20 @@ void servo4_cb(const std_msgs::Int16 &msg) {
   if (servo4_first == -1)
     servo4_first = servo4;
 }
+void servo5_cb(const std_msgs::Int16 &msg) {
+  servo5 = msg.data;
+  if (servo5_first == -1)
+    servo5_first = servo5;
+}
+void servo6_cb(const std_msgs::Int16 &msg) {
+  servo6 = msg.data;
+  if (servo6_first == -1)
+    servo6_first = servo6;
+}
 
 void m1_cb(const std_msgs::Int16 &msg) { m1 = msg.data; }
 void m2_cb(const std_msgs::Int16 &msg) { m2 = msg.data; }
+void m3_cb(const std_msgs::Int16 &msg) { m3 = msg.data; }
 
 // Publisher
 ros::Publisher range_sharp1_pub("arduino/range_sharp1", &range_sharp1);
@@ -289,9 +317,12 @@ ros::Subscriber<std_msgs::Int16> servo1_sub("arduino/servo1", &servo1_cb);
 ros::Subscriber<std_msgs::Int16> servo2_sub("arduino/servo2", &servo2_cb);
 ros::Subscriber<std_msgs::Int16> servo3_sub("arduino/servo3", &servo3_cb);
 ros::Subscriber<std_msgs::Int16> servo4_sub("arduino/servo4", &servo4_cb);
+ros::Subscriber<std_msgs::Int16> servo5_sub("arduino/servo5", &servo5_cb);
+ros::Subscriber<std_msgs::Int16> servo6_sub("arduino/servo6", &servo6_cb);
 
 ros::Subscriber<std_msgs::Int16> m1_sub("arduino/m1", &m1_cb);
 ros::Subscriber<std_msgs::Int16> m2_sub("arduino/m2", &m2_cb);
+ros::Subscriber<std_msgs::Int16> m3_sub("arduino/m3", &m3_cb);
 
 unsigned long prev_t = 0;
 
@@ -357,6 +388,7 @@ void communicate() {
 void setup() {
   Wire.begin();
   driver.init();
+  driver2.init();
   pinMode(EMERGENCY_IN, INPUT_PULLUP);
   pinMode(EMERGENCY_OUT, OUTPUT);
   range_sharp1.radiation_type = range_sharp1.INFRARED;
@@ -390,6 +422,7 @@ void setup() {
   Serial.begin(115200);
   nh.subscribe(m1_sub);
   nh.subscribe(m2_sub);
+  nh.subscribe(m3_sub);
   nh.advertise(range_sharp1_pub);
   nh.advertise(range_sharp2_pub);
   nh.advertise(range_sharp3_pub);
@@ -417,6 +450,8 @@ void setup() {
   nh.subscribe(servo2_sub);
   nh.subscribe(servo3_sub);
   nh.subscribe(servo4_sub);
+  nh.subscribe(servo5_sub);
+  nh.subscribe(servo6_sub);
   pwm.begin();
   // s1.attach(SERVO1_PIN);
   // s2.attach(SERVO2_PIN);
