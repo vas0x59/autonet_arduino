@@ -15,7 +15,7 @@
 #include <Adafruit_PWMServoDriver.h>
 #include <Encoder.h>
 #include <Servo.h>
-
+#include <pid.h>
 // called this way, it uses the default address 0x40
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // создаём объекты для управления сервоприводами
@@ -30,7 +30,11 @@ using namespace sensor_msgs;
 // #include <ros.h>
 
 ros::NodeHandle nh;
-
+#define PI 3.141592653589793
+#define MOTORS_V_UPDATERATE 7
+#define ONE_ROTATE_CONST 1426
+#define WHEEL_D 0.076
+#define ADD_MOTOR_CONST 40
 // CONFIG
 #define SHARP_MAX 1
 #define SHARP_MIN 0.01
@@ -85,6 +89,9 @@ Encoder encoder2(18, 19);
 
 MotorDriver driver(DRIVER_ADDRES);
 MotorDriver driver2(DRIVER_ADDRES2);
+PID m1_v_pid(10, 0.1, 0);
+PID m2_v_pid(10, 0.1, 0);
+
 
 Sharp sharp1(SHARP1_PIN);
 Sharp sharp2(SHARP2_PIN);
@@ -114,11 +121,24 @@ float analogin_2 = 0;
 float analogin_3 = 0;
 float analogin_4 = 0;
 
-float m1 = 0;
-float m2 = 0;
-float m3 = 0;
-long enc1 = 0;
-long enc2 = 0;
+int m1 = 0;
+int m2 = 0;
+float target_v_m1 = 0;
+float target_v_m2 = 0;
+int m3 = 0;
+// Float32
+float enc1 = 0;
+float enc2 = 0;
+float enc1v = 0;
+float enc2v = 0;
+float prev_enc1 = 0;
+float prev_enc2 = 0;
+
+float m1_v = 0;
+float m2_v = 0;
+
+unsigned long prev_time_m_v = 0;
+
 
 int servo1 = 0;
 int servo1_first = -1;
@@ -174,13 +194,33 @@ void read_sensors() {
 void read_driver() {
   // enc1 = driver.get_encoder_m1();
   // enc2 = driver.get_encoder_m2();
-  enc1 = encoder1.read();
-  enc2 = encoder2.read();
+  enc1 = (2.0*PI / ONE_ROTATE_CONST)*WHEEL_D*encoder1.read();
+  enc2 = (2.0*PI / ONE_ROTATE_CONST)*WHEEL_D*encoder2.read();
+  if ((prev_time_m_v + 1000/MOTORS_V_UPDATERATE) >= millis()){
+    enc1v = (enc1 - prev_enc1) / ((millis() - prev_time_m_v) / 1000.0);
+    enc2v = (enc2 - prev_enc2) / ((millis() - prev_time_m_v) / 1000.0);
+    
+    prev_time_m_v = millis();
+    prev_enc1 = enc1;
+    prev_enc2 = enc2;
+  }
   // bat = driver.read_bat();
 }
 
 void send_to_motors() {
   if (!emergency_1 && !emergency_2) {
+    m1 = (int)(m1_v_pid.calc(target_v_m1 - enc1v) + target_v_m1*ADD_MOTOR_CONST);
+    m2 = (int)(m2_v_pid.calc(target_v_m2 - enc2v) + target_v_m2*ADD_MOTOR_CONST);
+
+    if (m1 >= 70)
+      m1 = 70;
+    if (m1 <= -70)
+      m1 = -70;
+    if (m2 >= 70)
+      m2 = 70;
+    if (m2 <= -70)
+      m2 = 70;
+    
     driver.set_speed_m1(m1);
     driver.set_speed_m2(m2);
     driver2.set_speed_m1(m3);
@@ -238,8 +278,10 @@ Float32 power_line1_msg;    //
 Float32 power_line2_msg;    //
 Float32 power_line3_msg;    //
 
-Int32 enc1_msg; //
-Int32 enc2_msg; //
+Float32 enc1_msg; //
+Float32 enc2_msg; //
+Float32 enc1v_msg; //
+Float32 enc2v_msg; //
 
 Int16 analogin_1_msg; //
 Int16 analogin_2_msg; //
@@ -281,8 +323,8 @@ void servo6_cb(const std_msgs::Int16 &msg) {
     servo6_first = servo6;
 }
 
-void m1_cb(const std_msgs::Int16 &msg) { m1 = msg.data; }
-void m2_cb(const std_msgs::Int16 &msg) { m2 = msg.data; }
+void m1_cb(const std_msgs::Float32 &msg) { target_v_m1 = msg.data; }
+void m2_cb(const std_msgs::Float32 &msg) { target_v_m2 = msg.data; }
 void m3_cb(const std_msgs::Int16 &msg) { m3 = msg.data; }
 
 // Publisher
@@ -294,8 +336,12 @@ ros::Publisher range_sharp4_pub("arduino/range_sharp4", &range_sharp4);
 ros::Publisher range_ping1_pub("arduino/range_ping1", &range_ping1);
 ros::Publisher range_ping2_pub("arduino/range_ping2", &range_ping2);
 
-ros::Publisher enc1_pub("arduino/enc1", &enc1_msg);
-ros::Publisher enc2_pub("arduino/enc2", &enc1_msg);
+// ros::Publisher enc1_pub("arduino/enc1", &enc1_msg);
+// ros::Publisher enc2_pub("arduino/enc2", &enc1_msg);
+ros::Publisher enc1_pub("encoder1", &enc1_msg);
+ros::Publisher enc2_pub("encoder2", &enc2_msg);
+ros::Publisher enc1v_pub("encoder1_v", &enc1v_msg);
+ros::Publisher enc2v_pub("encoder2_v", &enc2v_msg);
 
 ros::Publisher bat_pub("arduino/bat", &bat_msg);
 ros::Publisher emergency_arduino_pub("arduino/emergency_arduino",
@@ -320,8 +366,8 @@ ros::Subscriber<std_msgs::Int16> servo4_sub("arduino/servo4", &servo4_cb);
 ros::Subscriber<std_msgs::Int16> servo5_sub("arduino/servo5", &servo5_cb);
 ros::Subscriber<std_msgs::Int16> servo6_sub("arduino/servo6", &servo6_cb);
 
-ros::Subscriber<std_msgs::Int16> m1_sub("arduino/m1", &m1_cb);
-ros::Subscriber<std_msgs::Int16> m2_sub("arduino/m2", &m2_cb);
+ros::Subscriber<std_msgs::Float32> m1_sub("motor1", &m1_cb);
+ros::Subscriber<std_msgs::Float32> m2_sub("motor2", &m2_cb);
 ros::Subscriber<std_msgs::Int16> m3_sub("arduino/m3", &m3_cb);
 
 unsigned long prev_t = 0;
@@ -353,6 +399,8 @@ void communicate() {
 
   enc1_msg.data = enc1;
   enc2_msg.data = enc2;
+  enc1v_msg.data = enc1v;
+  enc2v_msg.data = enc2v;
 
   analogin_1_msg.data = analogin_1;
   analogin_2_msg.data = analogin_2;
@@ -389,6 +437,8 @@ void setup() {
   Wire.begin();
   driver.init();
   driver2.init();
+  m1_v_pid.init();
+  m2_v_pid.init();
   pinMode(EMERGENCY_IN, INPUT_PULLUP);
   pinMode(EMERGENCY_OUT, OUTPUT);
   range_sharp1.radiation_type = range_sharp1.INFRARED;
