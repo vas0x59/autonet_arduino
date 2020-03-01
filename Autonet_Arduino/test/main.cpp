@@ -16,7 +16,7 @@
   Written by Limor Fried/Ladyada for Adafruit Industries.  
   BSD license, all text above must be included in any redistribution
  ****************************************************/
-
+#include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 
@@ -33,8 +33,8 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // have!
 #define SERVOMIN  150 // This is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  600 // This is the 'maximum' pulse length count (out of 4096)
-#define USMIN  600 // This is the rounded 'minimum' microsecond length based on the minimum pulse of 150
-#define USMAX  2400 // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
+#define USMIN  900 // This is the rounded 'minimum' microsecond length based on the minimum pulse of 150
+#define USMAX  2100 // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 
 // our servo # counter
@@ -86,14 +86,14 @@ void setServoPulse(uint8_t n, double pulse) {
 void loop() {
   // Drive each servo one at a time using setPWM()
   Serial.println(servonum);
-  for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
-    pwm.setPWM(servonum, 0, pulselen);
-  }
+  // for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
+  //   pwm.setPWM(servonum, 0, pulselen);
+  // }
 
-  delay(500);
-  for (uint16_t pulselen = SERVOMAX; pulselen > SERVOMIN; pulselen--) {
-    pwm.setPWM(servonum, 0, pulselen);
-  }
+  // delay(500);
+  // for (uint16_t pulselen = SERVOMAX; pulselen > SERVOMIN; pulselen--) {
+  //   pwm.setPWM(servonum, 0, pulselen);
+  // }
 
   delay(500);
 

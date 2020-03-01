@@ -1,4 +1,3 @@
-#include <Adafruit_PWMServoDriver.h>
 #include <Arduino.h>
 #include <Ping.h>
 #include <Sharp.h>
@@ -13,13 +12,17 @@
 #include <std_msgs/Int16.h>
 #include <std_msgs/Int32.h>
 
+#include <Adafruit_PWMServoDriver.h>
 #include <Encoder.h>
 #include <Servo.h>
+
+// called this way, it uses the default address 0x40
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // создаём объекты для управления сервоприводами
-Servo s1;
-Servo s2;
-Servo s3;
-Servo s4;
+// Servo s1;
+// Servo s2;
+// Servo s3;
+// Servo s4;
 
 using namespace std_msgs;
 using namespace sensor_msgs;
@@ -46,7 +49,7 @@ ros::NodeHandle nh;
 #define DRIVER_ADDRES 0x05
 
 #define EMERGENCY_OUT 12
-#define EMERGENCY_IN 11
+#define EMERGENCY_IN 33
 
 #define POWER_DATA_RATE 1.5
 #define POWER_LINE1 A13
@@ -59,10 +62,16 @@ ros::NodeHandle nh;
 #define ANALOGIN_3 A6
 #define ANALOGIN_4 A7
 
-#define SERVO1_PIN 22
-#define SERVO2_PIN 24
-#define SERVO3_PIN 26
-#define SERVO4_PIN 28
+#define SERVO1_PIN 0
+#define SERVO2_PIN 1
+#define SERVO3_PIN 15
+#define SERVO4_PIN 14
+
+#define SERVOMIN 150 // This is the 'minimum' pulse length count (out of 4096)
+#define SERVOMAX 600 // This is the 'maximum' pulse length count (out of 4096)
+#define USMIN 900 
+#define USMAX 2100
+#define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 // #define STD_SERVO1
 
 // #define SERVO1_PIN
@@ -107,13 +116,29 @@ long enc1 = 0;
 long enc2 = 0;
 
 int servo1 = 0;
-int servo1_first = -1;
+int servo1_first = 0;
 int servo2 = 0;
-int servo2_first = -1;
+int servo2_first = 0;
 int servo3 = 0;
-int servo3_first = -1;
+int servo3_first = 0;
 int servo4 = 0;
-int servo4_first = -1;
+int servo4_first = 0;
+
+void setServoPulse(uint8_t n, double pulse) {
+  double pulselength;
+
+  pulselength = 1000000;     // 1,000,000 us per second
+  pulselength /= SERVO_FREQ; // Analog servos run at ~60 Hz updates
+  Serial.print(pulselength);
+  Serial.println(" us per period");
+  pulselength /= 4096; // 12 bits of resolution
+  Serial.print(pulselength);
+  Serial.println(" us per bit");
+  pulse *= 1000000; // convert input seconds to us
+  pulse /= pulselength;
+  Serial.println(pulse);
+  pwm.setPWM(n, 0, pulse);
+}
 
 void read_sensors() {
   // Sharps
@@ -159,16 +184,25 @@ void send_to_motors() {
 void send_to_servos() {
   if (!emergency_1 && !emergency_2) {
     //   if (servo1_first)
-    s1.write(servo1);
-    s2.write(servo2);
-    s3.write(servo3);
-    s4.write(servo4);
+    // s1.write(servo1);
+    // s2.write(servo2);
+    // s3.write(servo3);
+    // s4.write(servo4);
+    // pwm.writeMicroseconds(servonum, microsec);
+    pwm.writeMicroseconds(SERVO1_PIN, map(servo1, 0, 180, USMIN, USMAX));
+    pwm.writeMicroseconds(SERVO2_PIN, map(servo2, 0, 180, USMIN, USMAX));
+    pwm.writeMicroseconds(SERVO3_PIN, map(servo3, 0, 180, USMIN, USMAX));
+    pwm.writeMicroseconds(SERVO4_PIN, map(servo4, 0, 180, USMIN, USMAX));
 
   } else {
-    s1.write(servo1_first);
-    s2.write(servo2_first);
-    s3.write(servo3_first);
-    s4.write(servo4_first);
+    // s1.write(servo1_first);
+    // s2.write(servo2_first);
+    // s3.write(servo3_first);
+    // s4.write(servo4_first);
+    pwm.writeMicroseconds(SERVO1_PIN, map(servo1_first, 0, 180, USMIN, USMAX));
+    pwm.writeMicroseconds(SERVO2_PIN, map(servo2_first, 0, 180, USMIN, USMAX));
+    pwm.writeMicroseconds(SERVO3_PIN, map(servo3_first, 0, 180, USMIN, USMAX));
+    pwm.writeMicroseconds(SERVO4_PIN, map(servo4_first, 0, 180, USMIN, USMAX));
   }
 }
 // OUT
@@ -263,19 +297,20 @@ unsigned long prev_t = 0;
 
 void communicate() {
 
-  h.stamp.sec = millis() / 1000;
+  // h.stamp.sec = millis() / 1000;
+  unsigned long tm = millis() / 1000;
 
-  range_sharp1.header = h;
-  range_sharp2.header = h;
-  range_sharp3.header = h;
-  range_sharp4.header = h;
+  range_sharp1.header.stamp.sec = tm;
+  range_sharp2.header.stamp.sec = tm;
+  range_sharp3.header.stamp.sec = tm;
+  range_sharp4.header.stamp.sec = tm;
   range_sharp1.range = sharp1_cm / 100;
   range_sharp2.range = sharp2_cm / 100;
   range_sharp3.range = sharp3_cm / 100;
   range_sharp4.range = sharp3_cm / 100;
 
-  range_ping1.header = h;
-  range_ping2.header = h;
+  range_ping1.header.stamp.sec = tm;
+  range_ping2.header.stamp.sec = tm;
   range_ping1.range = ping1_cm / 100;
   range_ping2.range = ping2_cm / 100;
 
@@ -321,8 +356,8 @@ void communicate() {
 
 void setup() {
   Wire.begin();
-  // driver.init();
-  pinMode(EMERGENCY_IN, INPUT);
+  driver.init();
+  pinMode(EMERGENCY_IN, INPUT_PULLUP);
   pinMode(EMERGENCY_OUT, OUTPUT);
   range_sharp1.radiation_type = range_sharp1.INFRARED;
   range_sharp1.max_range = SHARP_MAX;
@@ -349,6 +384,7 @@ void setup() {
   range_ping2.max_range = PING_MAX;
   range_ping2.min_range = PING_MIN;
   range_ping2.header.frame_id = "range_ping2";
+  // range_ping2.alignas
 
   nh.initNode();
   Serial.begin(115200);
@@ -381,11 +417,12 @@ void setup() {
   nh.subscribe(servo2_sub);
   nh.subscribe(servo3_sub);
   nh.subscribe(servo4_sub);
+  pwm.begin();
+  // s1.attach(SERVO1_PIN);
+  // s2.attach(SERVO2_PIN);
+  // s3.attach(SERVO2_PIN);
+  // s4.attach(SERVO2_PIN);
 
-  s1.attach(SERVO1_PIN);
-  s2.attach(SERVO2_PIN);
-  s3.attach(SERVO2_PIN);
-  s4.attach(SERVO2_PIN);
   // pwm.begin();
 
   // pwm.setOscillatorFrequency(27000000);
@@ -394,11 +431,18 @@ void setup() {
   // if you want to really speed stuff up, you can go into 'fast 400khz I2C'
   // mode some i2c devices dont like this so much so if you're sharing the bus,
   // watch out for this! Wire.setClock(400000);
+  pwm.setOscillatorFrequency(27000000);
+  pwm.setPWMFreq(SERVO_FREQ); // Analog servos run at ~50 Hz updates
+
+  delay(10);
 }
 
 void loop() {
-  if (digitalRead(EMERGENCY_IN) == 1) {
+  if (!digitalRead(EMERGENCY_IN) == 1) {
     emergency_1 = true;
+  }
+  else {
+    emergency_1 = false;
   }
   read_sensors();
   read_driver();
