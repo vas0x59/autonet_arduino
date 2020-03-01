@@ -38,10 +38,10 @@ ros::NodeHandle nh;
 #define PING_MAX 3
 #define PING_MIN 0.01
 
-#define SHARP1_PIN A0
-#define SHARP2_PIN A1
-#define SHARP3_PIN A2
-#define SHARP4_PIN A3
+#define SHARP1_PIN A8
+#define SHARP2_PIN A9
+#define SHARP3_PIN A10
+#define SHARP4_PIN A11
 
 #define PING1_PIN 30
 #define PING2_PIN 32
