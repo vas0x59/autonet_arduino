@@ -9,7 +9,6 @@ public:
     PID(float kp, float ki, float kd);
     float calc(float value, float set_point);
     float calc(float error);
-    void init();
     float kP;
     float kI;
     float kD;

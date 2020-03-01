@@ -14,7 +14,7 @@
 
 #include <Adafruit_PWMServoDriver.h>
 #include <Encoder.h>
-#include <Servo.h>
+// #include <Servo.h>
 #include <pid.h>
 // called this way, it uses the default address 0x40
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
@@ -437,8 +437,6 @@ void setup() {
   Wire.begin();
   driver.init();
   driver2.init();
-  m1_v_pid.init();
-  m2_v_pid.init();
   pinMode(EMERGENCY_IN, INPUT_PULLUP);
   pinMode(EMERGENCY_OUT, OUTPUT);
   range_sharp1.radiation_type = range_sharp1.INFRARED;
