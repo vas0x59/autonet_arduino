@@ -42,10 +42,13 @@ arduino/analogin_4:Int16
 arduino/servo1:Int16 \
 arduino/servo2:Int16 \
 arduino/servo3:Int16 \
-arduino/servo4:Int16
+arduino/servo4:Int16 \
+arduino/servo5:Int16 \
+arduino/servo6:Int16 
 #### Motors
 arduino/m1:Int16 \
-arduino/m2:Int16
+arduino/m2:Int16 \
+arduino/m3:Int16
 #### Emergency 
 arduino/emergency_arduino:Bool \
 emergency_main:Bool
