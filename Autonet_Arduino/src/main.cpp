@@ -34,7 +34,7 @@ ros::NodeHandle nh;
 #define MOTORS_V_UPDATERATE 7
 #define ONE_ROTATE_CONST 1426
 #define WHEEL_D 0.076
-#define ADD_MOTOR_CONST 40
+#define ADD_MOTOR_CONST 39
 // CONFIG
 #define SHARP_MAX 1
 #define SHARP_MIN 0.01
@@ -76,7 +76,7 @@ ros::NodeHandle nh;
 
 #define SERVOMIN 150 // This is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX 600 // This is the 'maximum' pulse length count (out of 4096)
-#define USMIN 900 
+#define USMIN 900
 #define USMAX 2100
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 // #define STD_SERVO1
@@ -88,10 +88,9 @@ Encoder encoder1(2, 3);
 Encoder encoder2(18, 19);
 
 MotorDriver driver(DRIVER_ADDRES);
-MotorDriver driver2(DRIVER_ADDRES2);
-PID m1_v_pid(10, 0.1, 0);
-PID m2_v_pid(10, 0.1, 0);
-
+// MotorDriver driver2(DRIVER_ADDRES2);
+PID m1_v_pid(18, 0.05, 0.001);
+PID m2_v_pid(18, 0.05, 0.001);
 
 Sharp sharp1(SHARP1_PIN);
 Sharp sharp2(SHARP2_PIN);
@@ -121,8 +120,6 @@ float analogin_2 = 0;
 float analogin_3 = 0;
 float analogin_4 = 0;
 
-int m1 = 0;
-int m2 = 0;
 float target_v_m1 = 0;
 float target_v_m2 = 0;
 int m3 = 0;
@@ -139,7 +136,6 @@ float m2_v = 0;
 
 unsigned long prev_time_m_v = 0;
 
-
 int servo1 = 0;
 int servo1_first = -1;
 int servo2 = 0;
@@ -152,7 +148,6 @@ int servo5 = 0;
 int servo5_first = -1;
 int servo6 = 0;
 int servo6_first = -1;
-
 
 void setServoPulse(uint8_t n, double pulse) {
   double pulselength;
@@ -181,9 +176,9 @@ void read_sensors() {
   // ping1_cm = ping1.read_cm();
   // ping2_cm = ping2.read_cm();
 
-  power_line1 = analogRead(POWER_LINE1) * 0.0048828125 * POWER_LINE_K;
-  power_line2 = analogRead(POWER_LINE2) * 0.0048828125 * POWER_LINE_K;
-  power_line3 = analogRead(POWER_LINE3) * 0.0048828125 * POWER_LINE_K;
+  // power_line1 = analogRead(POWER_LINE1) * 0.0048828125 * POWER_LINE_K;
+  // power_line2 = analogRead(POWER_LINE2) * 0.0048828125 * POWER_LINE_K;
+  // power_line3 = analogRead(POWER_LINE3) * 0.0048828125 * POWER_LINE_K;
 
   analogin_1 = analogRead(ANALOGIN_1);
   analogin_2 = analogRead(ANALOGIN_2);
@@ -194,12 +189,12 @@ void read_sensors() {
 void read_driver() {
   // enc1 = driver.get_encoder_m1();
   // enc2 = driver.get_encoder_m2();
-  enc1 = (2.0*PI / ONE_ROTATE_CONST)*WHEEL_D*encoder1.read();
-  enc2 = (2.0*PI / ONE_ROTATE_CONST)*WHEEL_D*encoder2.read();
-  if ((prev_time_m_v + 1000/MOTORS_V_UPDATERATE) >= millis()){
-    enc1v = (enc1 - prev_enc1) / ((millis() - prev_time_m_v) / 1000.0);
-    enc2v = (enc2 - prev_enc2) / ((millis() - prev_time_m_v) / 1000.0);
-    
+  enc1 = (2.0 * PI / ONE_ROTATE_CONST) * WHEEL_D * encoder1.read();
+  enc2 = (2.0 * PI / ONE_ROTATE_CONST) * WHEEL_D * (-encoder2.read());
+  if ((millis() - prev_time_m_v) >= 90) {
+    enc1v = ((enc1 - prev_enc1) / ((float)(millis() - prev_time_m_v))) * 1000;
+    enc2v = ((enc2 - prev_enc2) / ((float)(millis() - prev_time_m_v))) * 1000;
+
     prev_time_m_v = millis();
     prev_enc1 = enc1;
     prev_enc2 = enc2;
@@ -209,9 +204,12 @@ void read_driver() {
 
 void send_to_motors() {
   if (!emergency_1 && !emergency_2) {
-    m1 = (int)(m1_v_pid.calc(target_v_m1 - enc1v) + target_v_m1*ADD_MOTOR_CONST);
-    m2 = (int)(m2_v_pid.calc(target_v_m2 - enc2v) + target_v_m2*ADD_MOTOR_CONST);
-
+    float m1 = 0;
+    float m2 = 0;
+    m1 = target_v_m1 * ADD_MOTOR_CONST; // m1_v_pid.calc(target_v_m1 - enc1v)
+    m2 = target_v_m2 * ADD_MOTOR_CONST; // m2_v_pid.calc(target_v_m2 - enc2v)
+    m1 += m1_v_pid.calc(target_v_m1 - enc1v);
+    m2 += m2_v_pid.calc(target_v_m2 - enc2v);
     if (m1 >= 70)
       m1 = 70;
     if (m1 <= -70)
@@ -220,17 +218,21 @@ void send_to_motors() {
       m2 = 70;
     if (m2 <= -70)
       m2 = 70;
-    
-    driver.set_speed_m1(m1);
-    driver.set_speed_m2(m2);
-    driver2.set_speed_m1(m3);
+
+    driver.set_speed_m2(-m1); // Gosha zadolbal
+    driver.set_speed_m1(m2);
+    power_line1 = m1;
+    power_line2 = target_v_m1;
+    // driver2.set_speed_m1(m3);
   } else {
-    m1 = 0;
-    m2 = 0;
+    // m1 = 0;
+    // m2 = 0;
     m3 = 0;
+    target_v_m1 = 0;
+    target_v_m2 = 0;
     driver.set_speed_m1(0);
     driver.set_speed_m2(0);
-    driver2.set_speed_m1(0);
+    // driver2.set_speed_m1(0);
   }
 }
 
@@ -278,8 +280,8 @@ Float32 power_line1_msg;    //
 Float32 power_line2_msg;    //
 Float32 power_line3_msg;    //
 
-Float32 enc1_msg; //
-Float32 enc2_msg; //
+Float32 enc1_msg;  //
+Float32 enc2_msg;  //
 Float32 enc1v_msg; //
 Float32 enc2v_msg; //
 
@@ -417,6 +419,8 @@ void communicate() {
 
   enc1_pub.publish(&enc1_msg);
   enc2_pub.publish(&enc2_msg);
+  enc1v_pub.publish(&enc1v_msg);
+  enc2v_pub.publish(&enc2v_msg);
 
   analogin_1_pub.publish(&analogin_1_msg);
   analogin_2_pub.publish(&analogin_2_msg);
@@ -431,12 +435,13 @@ void communicate() {
     power_line3_pub.publish(&power_line3_msg);
     prev_t = millis();
   }
+  nh.spinOnce();
 }
 
 void setup() {
   Wire.begin();
   driver.init();
-  driver2.init();
+  // driver2.init();
   pinMode(EMERGENCY_IN, INPUT_PULLUP);
   pinMode(EMERGENCY_OUT, OUTPUT);
   range_sharp1.radiation_type = range_sharp1.INFRARED;
@@ -481,6 +486,8 @@ void setup() {
 
   nh.advertise(enc1_pub);
   nh.advertise(enc2_pub);
+  nh.advertise(enc1v_pub);
+  nh.advertise(enc2v_pub);
 
   nh.advertise(bat_pub);
   nh.advertise(emergency_arduino_pub);
@@ -500,7 +507,7 @@ void setup() {
   nh.subscribe(servo4_sub);
   nh.subscribe(servo5_sub);
   nh.subscribe(servo6_sub);
-  pwm.begin();
+  // pwm.begin();
   // s1.attach(SERVO1_PIN);
   // s2.attach(SERVO2_PIN);
   // s3.attach(SERVO2_PIN);
@@ -514,32 +521,32 @@ void setup() {
   // if you want to really speed stuff up, you can go into 'fast 400khz I2C'
   // mode some i2c devices dont like this so much so if you're sharing the bus,
   // watch out for this! Wire.setClock(400000);
-  pwm.setOscillatorFrequency(27000000);
-  pwm.setPWMFreq(SERVO_FREQ); // Analog servos run at ~50 Hz updates
+  // pwm.setOscillatorFrequency(27000000);
+  // pwm.setPWMFreq(SERVO_FREQ); // Analog servos run at ~50 Hz updates
 
   delay(10);
 }
 
 void loop() {
-  if (!digitalRead(EMERGENCY_IN) == 1) {
-    emergency_1 = true;
-  }
-  else {
-    emergency_1 = false;
-  }
+  // if (!digitalRead(EMERGENCY_IN) == 1) {
+  //   emergency_1 = true;
+  // }
+  // else {
+  //   emergency_1 = false;
+  // }
   read_sensors();
   read_driver();
   communicate();
 
-  if (emergency_1 || emergency_2) {
-    digitalWrite(EMERGENCY_OUT, 1);
-  } else {
-    digitalWrite(EMERGENCY_OUT, 0);
-  }
-  nh.spinOnce();
+  // if (emergency_1 || emergency_2) {
+  //   digitalWrite(EMERGENCY_OUT, 1);
+  // } else {
+  //   digitalWrite(EMERGENCY_OUT, 0);
+  // }
+
   delay(1);
   send_to_motors();
-  send_to_servos();
+  // send_to_servos();
 }
 
 void scan_i2c() {
